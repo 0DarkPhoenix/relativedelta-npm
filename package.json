@@ -1,0 +1,29 @@
+{
+	"name": "relativedelta",
+	"version": "0.0.1",
+	"author": "Dark_Phoenix_",
+	"repository": {
+		"url": ""
+	},
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"devDependencies": {
+		"@changesets/cli": "^2.28.1",
+		"@types/bun": "^1.2.8",
+		"bun": "^1.2.7",
+		"tsup": "^8.4.0",
+		"typescript": "^5.8.2"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"description": "Bring the utilities from the relativedelta function of the \"dateutils\" Python library to Javascript and Typescript",
+	"license": "MIT",
+	"scripts": {
+		"build": "bunx tsup",
+		"lint": "bunx tsc",
+		"test": "bun test --coverage"
+	},
+	"type": "module",
+	"types": "./dist/index.d.ts"
+}
