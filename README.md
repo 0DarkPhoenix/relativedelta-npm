@@ -20,11 +20,11 @@ console.log("Number of seconds in 15 days: ", fifteenDaysInSeconds) // Logs "Num
 
 
 ## Similarities and differences with Python's `relativedelta`
-A lot of effort has been put into ensuring that this `RelativeDelta` function behaves and feels the same as Python's `relativedelta` function. While most functions could be directly implemented, others had to be implemented in a different way to work with Javascript and Typescript (Like using `.applyToDate()` instead of being able to apply the `RelativeDelta` object to a `Date` object directly. For comparison, in Python you can add a `datetime` object to a `relativedelta` object using the `+` operator).
+A lot of effort has been put into ensuring that this `RelativeDelta` function behaves and feels the same as Python's `relativedelta` function. While most features could be directly implemented, others had to be implemented in a different way to work with Javascript and Typescript (Like using `.applyToDate()` instead of being able to apply the `RelativeDelta` object to a `Date` object directly. For comparison, in Python you can add a `datetime` object to a `relativedelta` object using the `+` operator).
 
 ### Differences
 #### Adding dates
-`datetime.now + relativedelta()` -> `new RelativeDelta({}).applyToDate(new Date())`
+`datetime.now() + relativedelta()` -> `new RelativeDelta({}).applyToDate(new Date())`
 
 **Python**
 ```python
@@ -35,6 +35,8 @@ datetime.now() + relativedelta(days=1)
 ```javascript
 new RelativeDelta({ days: 1 }).applyToDate(new Date())
 ```
+
+<br>
 
 #### Converting relative delta to time unit
 **Not Supported** -> `new RelativeDelta({}).toMilliseconds()`, `new RelativeDelta({}).toSeconds()`, ... ,`new RelativeDelta({}).toYears()`
@@ -50,10 +52,14 @@ fifteen_days_to_milliseconds = relativedelta(days=15) * 24 * 60 * 60 * 1000
 new RelativeDelta({ days: 15 }).toMilliseconds()
 ```
 
+<br>
+
 #### millisecond and milliseconds parameters
 `microsecond`, `microseconds` -> `millisecond`, `milliseconds`
 
 `new Date()` only supports milliseconds as its smallest unit. Therefore, there was no reason to implement the logic to handle microseconds and thus this parameter was renamed to handle milliseconds.
+
+<br>
 
 #### date1 and date2 parameters
 `dt1`, `dt2` -> `date1`, `date2`
@@ -67,6 +73,8 @@ relativedelta(dt1=current_date, dt2=previous_date)
 ```javascript
 new RelativeDelta({date1: currentDate, date2: previousDate})
 ```
+
+<br>
 
 ### Unimplemented parameters
 There are a couple of parameters which aren't implemented yet:
