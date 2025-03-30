@@ -2,7 +2,7 @@
 
 `relativedelta` is an NPM package which brings the functionality of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function from the [`dateutil` Python library](https://github.com/dateutil/dateutil) over to Javascript and Typescript.
 
-This makes calculating time deltas, applying different time units to dates and converting time units into other time units easier and more readable, all while respecting varying month lengths and leap years.
+This package for Javascript and Typescript makes calculating time deltas, applying different time units to dates and converting time units into other time units easier and more readable, all while respecting varying month lengths and leap years.
 
 ## Installation and usage
 1. Install the `relativedelta` package
