@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"author": "Dark_Phoenix_",
 	"repository": {
-		"url": ""
+		"url": "https://github.com/0DarkPhoenix/relativedelta-npm"
 	},
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
@@ -25,5 +25,8 @@
 		"test": "bun test --coverage"
 	},
 	"type": "module",
-	"types": "./dist/index.d.ts"
+	"types": "./dist/index.d.ts",
+	"dependencies": {
+		"@microsoft/tsdoc": "^0.15.1"
+	}
 }

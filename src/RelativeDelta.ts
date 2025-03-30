@@ -1,31 +1,34 @@
 export interface RelativeDeltaOptions {
 	/**
 	 * First date for calculating the difference between two dates.
+	 *
 	 * Must be provided together with date2.
 	 */
 	date1?: Date;
 
 	/**
 	 * Second date for calculating the difference between two dates.
+	 *
 	 * Must be provided together with date1.
 	 */
 	date2?: Date;
 
 	/**
 	 * Number of years to add (or subtract if negative).
+	 *
 	 * Must be an integer.
 	 */
 	years?: number;
 
 	/**
 	 * Number of months to add (or subtract if negative).
+	 *
 	 * Must be an integer.
 	 */
 	months?: number;
 
 	/**
 	 * Number of weeks to add (or subtract if negative).
-	 * Converted to days (1 week = 7 days).
 	 */
 	weeks?: number;
 
@@ -54,7 +57,6 @@ export interface RelativeDeltaOptions {
 	 */
 	milliseconds?: number;
 
-	// Absolute values (singular form)
 	/**
 	 * Sets the year component of a date when used with `.applyToDate()`
 	 *
@@ -65,7 +67,7 @@ export interface RelativeDeltaOptions {
 	/**
 	 * Sets the month component of a date when used with `.applyToDate()`
 	 *
-	 * Must be an integer between 1 and 12.
+	 * Must be an integer between 1 and 12 (January to December)
 	 */
 	month?: number;
 
@@ -74,7 +76,18 @@ export interface RelativeDeltaOptions {
 	 *
 	 * Must be an integer between 1 and 32.
 	 *
-	 * Special case: 32 sets the day to the last day of the month.
+	 * Special case: 32 sets the day to the last date of the month.
+	 * @example ### Set to last date of the month
+	 * ```javascript
+	 * const date = new Date(2020, 1, 14) // February 14th, 2020 (Special because this is a leap year)
+	 * // Get the last date of the month
+	 * const endOfMonth = new RelativeDelta({ day: 32 }).applyToDate(date) // Returns new Date(2020, 1, 29), so February 29th, 2020
+	 *
+	 * // If you are in a different timezone than UTC, use `.toString()` or `.toLocaleString()` to log the date to the console in your local timezone.
+	 * // When this is not done, `console.log()` will display the date in UTC (shown by the 'Z' suffix at the end of the date),
+	 * // thus causing confusion because the date in the console isn't exactly February 29th at 00:00:000
+	 * console.log(endOfMonth.toString())
+	 * ```
 	 */
 	day?: number;
 
@@ -108,24 +121,16 @@ export interface RelativeDeltaOptions {
 }
 
 /**
- * A TypeScript implementation of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function from the [`dateutil` Python library](https://github.com/dateutil/dateutil)
+ * A TypeScript implementation of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function
+ * from the [`dateutil` Python library](https://github.com/dateutil/dateutil).
  *
  * `RelativeDelta` is a class which can determine the time difference between two dates,
  * apply a time delta to a date, and convert time units into other time units, all while respecting varying month lengths and leap years.
  *
- * @example
- * // Calculate time delta between two dates in days
- * const date1 = new Date(2021, 11, 31); // December 31st, 2021
- * const date2 = new Date(2020, 0, 1);   // January 1st, 2020
- *
- * const delta = new RelativeDelta({ date1, date2 });
- * const deltaInDays = delta.toDays(); // Returns 730
- * // You can also get the delta in other units:
- * delta.toYears();   // Returns ~2
- * delta.toMonths();  // Returns ~24
- * delta.toWeeks();   // Returns ~104.29
+ * @author [Dark_Phoenix_](https://github.com/0DarkPhoenix)
+ * @see [GitHub Repository](https://github.com/0DarkPhoenix/relativedelta-npm) - Project source code
+ * @see [NPM Package](https://www.npmjs.com/package/package-name) - Package distribution
  */
-
 export class RelativeDelta {
 	years: number;
 	months: number;
@@ -142,7 +147,45 @@ export class RelativeDelta {
 	second: number | null;
 	millisecond: number | null;
 	/**
-	 * Create a RelativeDelta with named parameters
+	 * A TypeScript implementation of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function
+	 * from the [`dateutil`](https://github.com/dateutil/dateutil) Python library.
+	 *
+	 * `RelativeDelta` is a class which can determine the time difference between two dates,
+	 * apply a time delta to a date, and convert time units into other time units, all while respecting varying month lengths and leap years.
+	 *
+	 * @param options - The options for the class, passed as a dictionary with the parameter options {@link RelativeDeltaOptions}
+	 *
+	 * ## Examples
+	 *
+	 * @example ### Time delta between 2 dates
+	 * ```javascript
+	 * // Calculate time delta between two dates in days
+	 * const date1 = new Date(2021, 11, 31); // December 31st, 2021
+	 * const date2 = new Date(2020, 0, 1);   // January 1st, 2020. This year is a leap year
+	 *
+	 * const delta = new RelativeDelta({ date1: date1, date2: date2 });
+	 * delta.toDays(); 	// Returns 730
+	 * // You can also get the delta in other units:
+	 * delta.toYears();   	// Returns 2
+	 * delta.toMonths(); 	// Returns 24
+	 * delta.toWeeks();   	// Returns 104.2857...
+	 * delta.toHours();   	// Returns 17520
+	 * delta.toMinutes();	// Returns 1051200
+	 * delta.toSeconds(); 	// Returns 63072000
+	 * delta.toMilliseconds(); // Returns 63072000000
+	 * ```
+	 * @example ### Apply time delta to date
+	 * ```javascript
+	 * // Add 1 year, 2 months and 3 days to a date
+	 * const date = new Date(2020, 0, 1); // January 1st, 2020
+	 * new RelativeDelta({ years: 1, months: 2, days: 3 }).applyToDate(date); // Returns March 4th, 2021
+	 * ```
+	 *
+	 * @example ### Convert time unit into other time unit
+	 * ```javascript
+	 * // Determine the time to live (ttl) in milliseconds
+	 * const ttl = new RelativeDelta({ minutes: 110 }).toMilliseconds() // Returns 6600000
+	 * ```
 	 */
 	constructor(options: RelativeDeltaOptions = {}) {
 		const { date1, date2 } = options;
@@ -313,8 +356,37 @@ export class RelativeDelta {
 	}
 
 	/**
-	 * Add this delta to a date, DST-aware but without letting DST affect the result
-	 * Also sets absolute values for date components if specified
+	 * Apply the relative delta to the provided date
+	 *
+	 * @param date - `Date` object where the relative delta should be applied to.
+	 *
+	 * @returns `Date` object with the applied relative delta
+	 *
+	 * ## Tips & Examples
+	 * There are a few interactions which are useful to know.
+	 * The examples below show how to use this function,
+	 * and show some situations where RelativeDelta can be used to solve a "complex" situation in a simple way.
+	 *
+	 * @example ### Get the first date of the current month
+	 * ```javascript
+	 * const currentDate = new Date()
+	 * new RelativeDelta({ day: 1 }).applyToDate(currentDate)
+	 * ```
+	 *
+	 * @example ### Get the last date of the current month
+	 * ```javascript
+	 * const currentDate = new Date()
+	 * new RelativeDelta({ day: 31 }).applyToDate(currentDate)
+	 * ```
+	 * When a date has less than 31 days, it automatically gives the correct final date and doesn't overflow into the next month
+	 *
+	 * (For example: February has 28 days (29 days in leap year). When `day` is set to 31, it doesn't overflow into the next month (3rd or 2nd of March) but stays in February (28th or 29th of February))
+	 *
+	 * @example ### Get the second to last date of the current month
+	 * ```javascript
+	 * const currentDate = new Date()
+	 * new RelativeDelta({ day: 31, days: -1 }).applyToDate(currentDate)
+	 * ```
 	 */
 	applyToDate(date: Date): Date {
 		const result = new Date(date);
@@ -327,10 +399,7 @@ export class RelativeDelta {
 			const targetYear = result.getFullYear();
 			const targetMonth = this.month !== null ? this.month - 1 : result.getMonth(); // Adjust for 0-based months
 
-			if (this.day === 32) {
-				// Special case: set to last day of month
-				result.setFullYear(targetYear, targetMonth + 1, 0); // Day 0 of next month = last day of current month
-			} else if (this.day !== null) {
+			if (this.day !== null) {
 				// Get the max days in the target month
 				const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
 				// Use the minimum of the requested day and the days in the month
@@ -386,6 +455,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total seconds, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of seconds
 	 */
 	toSeconds(referenceDate: Date = new Date()): number {
 		// Constants for time unit conversions
@@ -473,6 +545,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total milliseconds, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of milliseconds
 	 */
 	toMilliseconds(referenceDate: Date = new Date()): number {
 		return this.toSeconds(referenceDate) * 1000;
@@ -480,6 +555,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total minutes, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of minutes
 	 */
 	toMinutes(referenceDate: Date = new Date()): number {
 		return this.toSeconds(referenceDate) / 60;
@@ -487,6 +565,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total hours, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of hours
 	 */
 	toHours(referenceDate: Date = new Date()): number {
 		return this.toSeconds(referenceDate) / 3600; // 60 * 60
@@ -494,6 +575,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total days, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of days
 	 */
 	toDays(referenceDate: Date = new Date()): number {
 		return this.toSeconds(referenceDate) / 86400; // 24 * 60 * 60
@@ -501,6 +585,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total weeks, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of weeks
 	 */
 	toWeeks(referenceDate: Date = new Date()): number {
 		return this.toSeconds(referenceDate) / 604800; // 7 * 24 * 60 * 60
@@ -508,6 +595,9 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total months, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of months
 	 */
 	toMonths(referenceDate: Date = new Date()): number {
 		// Python uses a fixed constant for days per month
@@ -530,13 +620,23 @@ export class RelativeDelta {
 
 	/**
 	 * Convert to total years, DST-neutral
+	 *
+	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @returns Total number of years
 	 */
 	toYears(referenceDate: Date = new Date()): number {
 		return this.toMonths(referenceDate) / 12;
 	}
 
 	/**
-	 * Return a normalized version of this delta, DST-neutral
+	 * Normalize the parameters of the RelativeDelta object, DST-neutral
+	 *
+	 * @returns `RelativeDelta` object with normalized parameters
+	 *
+	 * @example
+	 * ```javascript
+	 * new RelativeDelta({ weeks: 2.5, days: 1.5, hours: 2.3 }).normalized(); // Returns RelativeDelta({ days: 19, hours: 2, minutes: 18 })
+	 * ```
 	 */
 	normalized(): RelativeDelta {
 		const days = Math.trunc(this.days);
@@ -633,7 +733,7 @@ export class RelativeDelta {
 		const absoluteValues = [
 			{ name: "year", value: this.year, range: { min: 1, max: 9999 } },
 			{ name: "month", value: this.month, range: { min: 1, max: 12 } },
-			{ name: "day", value: this.day, range: { min: 1, max: 32 } },
+			{ name: "day", value: this.day, range: { min: 1, max: 31 } },
 			{ name: "hour", value: this.hour, range: { min: 1, max: 23 } },
 			{ name: "minute", value: this.minute, range: { min: 1, max: 59 } },
 			{ name: "second", value: this.second, range: { min: 1, max: 59 } },
