@@ -14,7 +14,6 @@ jobs:
             - uses: oven-sh/setup-bun@v1
               with:
                 bun-version: latest
-                registry-url: 'https://registry.npmjs.org'
             - run: bun install
             - name: Create Release Pull Request or Publish
               id: changesets
