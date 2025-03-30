@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"author": "Dark_Phoenix_",
 	"repository": {
-		"url": "https://github.com/0DarkPhoenix/relativedelta-npm"
+		"url": "git+https://github.com/0DarkPhoenix/relativedelta-npm.git"
 	},
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
