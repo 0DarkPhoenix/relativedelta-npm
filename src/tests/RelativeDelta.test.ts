@@ -44,7 +44,7 @@ test("Apply To Date", () => {
 
 test("Apply To Date - Leap Year", () => {
 	const date = new Date(2020, 0, 31, 0, 0, 0); // January 1st, 2020 at 00:00:00
-	expect(new RelativeDelta({ months: 1, day: 32 }).applyToDate(date)).toEqual(
+	expect(new RelativeDelta({ months: 1, day: 31 }).applyToDate(date)).toEqual(
 		new Date(2020, 1, 29, 0, 0, 0),
 	);
 });
