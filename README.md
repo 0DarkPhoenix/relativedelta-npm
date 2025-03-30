@@ -83,4 +83,4 @@ There are a couple of parameters which aren't implemented yet:
 - yearday
 - nlyearday
 
-If you wan't a parameter to be implemented with more priority, feel free to [open an issue](https://github.com/0DarkPhoenix/relativedelta-npm/issues)!
+If you want a parameter to be implemented with more priority, feel free to [open an issue](https://github.com/0DarkPhoenix/relativedelta-npm/issues)!
