@@ -1,17 +1,57 @@
-name: CI
+name: CI/CD Pipeline
 on: 
     push: 
         branches: 
             - "**"
 
 jobs:
-    build:
+    pipeline:
         runs-on: ubuntu-latest
+        # Permissions needed for changesets to create and merge PRs
+        permissions:
+          contents: write
+          pull-requests: write
         steps:
             - uses: actions/checkout@v3
-            - uses: oven-sh/setup-bun@v1
+            - uses: oven-sh/setup-bun@v2
               with:
                 bun-version: latest
             
-            - run: bun install
-            - run: bun run lint && bun run build && bun run test
+            - name: Install Dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Lint
+              run: bun run lint 
+
+            - name: Build
+              run:  bun run build 
+
+            - name: Test
+              run: bun run test
+
+            # Check if dist folder exists before publishing
+            - name: Check if dist folder exists
+              id: check-dist
+              run: |
+                if [ -d "dist" ]; then
+                  echo "dist_exists=true" >> $GITHUB_OUTPUT
+                else
+                  echo "dist_exists=false" >> $GITHUB_OUTPUT
+                  echo "::error::dist folder does not exist. Build may have failed."
+                  exit 1
+                fi
+
+            # Only run publish steps on main branch
+            - name: Create Release Pull Request or Publish
+              if: github.ref == 'refs/heads/main' && steps.check-dist.outputs.dist_exists == 'true'
+              id: changesets
+              uses: changesets/action@v1
+              with:
+                publish: bun publish
+                version: bun changeset version
+                # Enable auto-merge for PRs
+                commit: "chore: version packages"
+                title: "chore: version packages"
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                NPM_CONFIG_TOKEN: ${{ secrets.NPM_AUTOMATION_TOKEN }}

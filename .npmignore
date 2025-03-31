@@ -1,9 +1,14 @@
 src
 node_modules
+.github
+.changeset
+.vscode
 
 .env
 .DS_Store
+.gitignore
 
+bunfig.toml
 bun.lock
 tsconfig.json
 tsup.config.ts
