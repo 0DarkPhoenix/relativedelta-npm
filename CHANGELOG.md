@@ -1,5 +1,11 @@
 # relativedelta
 
+## 0.2.2
+
+### Patch Changes
+
+- b8fc2a0: Fix for missing dist folder when using workflow
+
 ## 0.2.1
 
 ### Patch Changes
