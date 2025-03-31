@@ -2,9 +2,12 @@
 	"name": "relativedelta",
 	"version": "0.2.2",
 	"author": "Dark_Phoenix_",
+	"description": "Bring the utilities from the relativedelta function of the \"dateutils\" Python library to Javascript and Typescript",
+	"license": "MIT",
 	"repository": {
 		"url": "git+https://github.com/0DarkPhoenix/relativedelta-npm.git"
 	},
+	"keywords": ["relativedelta", "timedelta", "dateutils", "date", "time"],
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"devDependencies": {
@@ -17,8 +20,6 @@
 	"peerDependencies": {
 		"typescript": "^5"
 	},
-	"description": "Bring the utilities from the relativedelta function of the \"dateutils\" Python library to Javascript and Typescript",
-	"license": "MIT",
 	"scripts": {
 		"build": "bunx tsup",
 		"lint": "bunx tsc",
