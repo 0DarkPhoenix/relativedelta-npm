@@ -1,4 +1,8 @@
 # relativedelta-npm
+![Build Status](https://img.shields.io/github/actions/workflow/status/0DarkPhoenix/relativedelta-npm/main.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white&label=Build)
+![Coveralls](https://img.shields.io/coveralls/github/0DarkPhoenix/relativedelta-npm?style=for-the-badge&logo=coveralls&logoColor=white)
+
+
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)
 

@@ -26,8 +26,13 @@ jobs:
             - name: Build
               run:  bun run build 
 
-            - name: Test
-              run: bun run test
+            - name: Test with Coverage
+              run: bun test --coverage
+            
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
 
             # Check if dist folder exists before publishing
             - name: Check if dist folder exists
