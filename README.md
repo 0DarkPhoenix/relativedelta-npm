@@ -1,10 +1,9 @@
 # relativedelta-npm
-![Build Status](https://img.shields.io/github/actions/workflow/status/0DarkPhoenix/relativedelta-npm/main.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white&label=Build)
-![Coveralls](https://img.shields.io/coveralls/github/0DarkPhoenix/relativedelta-npm?style=for-the-badge&logo=coveralls&logoColor=white)
-
-
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)
+
+![Build Status](https://img.shields.io/github/actions/workflow/status/0DarkPhoenix/relativedelta-npm/main.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white&label=Build)
+![Coveralls](https://img.shields.io/coveralls/github/0DarkPhoenix/relativedelta-npm?style=for-the-badge&logo=coveralls&logoColor=white)
 
 ![NPM Version](https://img.shields.io/npm/v/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Version)
 ![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Unpacked%20size)
