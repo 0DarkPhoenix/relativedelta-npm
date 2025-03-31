@@ -3,6 +3,7 @@ node_modules
 .github
 .changeset
 .vscode
+images
 
 .env
 .DS_Store
