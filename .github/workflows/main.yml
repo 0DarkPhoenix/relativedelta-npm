@@ -27,13 +27,13 @@ jobs:
               run:  bun run build 
 
             - name: Test with Coverage
-              run: bun test --reporter=junit --reporter-outfile=./bun.xml
+              run: bun test --coverage --coverage-reporter=lcov
             
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
-                path-to-lcov: ./bun.xml
+                path-to-lcov: ./coverage/lcov.info
 
             # Check if dist folder exists before publishing
             - name: Check if dist folder exists
