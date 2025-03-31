@@ -3,7 +3,8 @@
 ![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)
 
 ![NPM Version](https://img.shields.io/npm/v/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Version)
-![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Unpacked%20size)<br>
+![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Unpacked%20size)
+
 ![NPM Downloads (Total)](https://img.shields.io/npm/d18m/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Total%20downloads)<br>
 ![NPM Downloads (Weekly)](https://img.shields.io/npm/dw/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Downloads)
 ![NPM Downloads (Monthly)](https://img.shields.io/npm/dm/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Downloads)
