@@ -1,16 +1,15 @@
 # relativedelta-npm
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logoUrl=https://raw.githubusercontent.com/0DarkPhoenix/relativedelta-npm/Update-Readme-with-shields/relativedelta-package/images/source/bun.svg&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)
 
+![NPM Version](https://img.shields.io/npm/v/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Version)
+![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Unpacked%20size)<br>
+![NPM Downloads (Total)](https://img.shields.io/npm/d18m/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Total%20downloads)<br>
+![NPM Downloads (Weekly)](https://img.shields.io/npm/dw/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Downloads)
+![NPM Downloads (Monthly)](https://img.shields.io/npm/dm/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Downloads)
+![NPM Downloads (Yearly)](https://img.shields.io/npm/dy/relativedelta?style=for-the-badge&logo=npm&logoColor=cb0000&label=Downloads)
 
-![NPM Version](https://img.shields.io/npm/v/relativedelta?logo=npm&logoColor=cb0000&label=Version)
-![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/relativedelta?logo=npm&logoColor=cb0000&label=Unpacked%20size)<br>
-![NPM Downloads (Total)](https://img.shields.io/npm/d18m/relativedelta?logo=npm&logoColor=cb0000&label=Total%20downloads)
-![NPM Downloads (Weekly)](https://img.shields.io/npm/dw/relativedelta?logo=npm&logoColor=cb0000&label=Downloads)
-![NPM Downloads (Monthly)](https://img.shields.io/npm/dm/relativedelta?logo=npm&logoColor=cb0000&label=Downloads)
-![NPM Downloads (Yearly)](https://img.shields.io/npm/dy/relativedelta?logo=npm&logoColor=cb0000&label=Downloads)
-
-![GitHub License](https://img.shields.io/github/license/0DarkPhoenix/relativedelta-npm)
+![GitHub License](https://img.shields.io/github/license/0DarkPhoenix/relativedelta-npm?style=for-the-badge)
 
 
 `relativedelta` is an NPM package which brings the functionality of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function from the [`dateutil` Python library](https://github.com/dateutil/dateutil) over to Javascript and Typescript.
