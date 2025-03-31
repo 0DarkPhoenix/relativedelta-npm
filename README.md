@@ -1,6 +1,6 @@
 # relativedelta-npm
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logoUrl=https://raw.githubusercontent.com/0DarkPhoenix/relativedelta-npm/main/relativedelta-package/images/source/bun.svg&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logoUrl=https://raw.githubusercontent.com/0DarkPhoenix/relativedelta-npm/Update-Readme-with-shields/relativedelta-package/images/source/bun.svg&logoColor=white)
 
 
 ![NPM Version](https://img.shields.io/npm/v/relativedelta?logo=npm&logoColor=cb0000&label=Version)
