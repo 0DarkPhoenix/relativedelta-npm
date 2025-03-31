@@ -33,6 +33,7 @@ jobs:
               uses: coverallsapp/github-action@v2
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
+                path-to-lcov: ./coverage/lcov.info
 
             # Check if dist folder exists before publishing
             - name: Check if dist folder exists
