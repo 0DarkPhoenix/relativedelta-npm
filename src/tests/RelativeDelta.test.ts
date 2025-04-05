@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { RelativeDelta } from "../RelativeDelta";
+import { FR, MO, SA, SU, TH, TU, WE } from "../WeekdayTypes";
 
 /* -------------------------------------------------------------------------- */
 /*                               Date Comparison                              */
@@ -12,6 +13,7 @@ test("Date Comparison", () => {
 			years: -1,
 			months: -11,
 			days: -30,
+			leapDays: -1,
 			hours: -23,
 			minutes: -59,
 			seconds: -59,
@@ -43,9 +45,65 @@ test("Apply To Date", () => {
 });
 
 test("Apply To Date - Leap Year", () => {
-	const date = new Date(2020, 0, 31, 0, 0, 0); // January 1st, 2020 at 00:00:00
+	const date = new Date(2020, 0, 31, 0, 0, 0); // January 31st, 2020 at 00:00:00
 	expect(new RelativeDelta({ months: 1, day: 31 }).applyToDate(date)).toEqual(
 		new Date(2020, 1, 29, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - Leap Days in Normal Year", () => {
+	const date = new Date(2023, 0, 31, 0, 0, 0); // January 31st, 2023 at 00:00:00
+	expect(new RelativeDelta({ months: 4, leapDays: 10 }).applyToDate(date)).toEqual(
+		new Date(2023, 4, 31, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - Leap Days in Leap Year", () => {
+	const date = new Date(2020, 0, 31, 0, 0, 0); // January 31st, 2020 at 00:00:00
+	expect(new RelativeDelta({ months: 4, leapDays: 10 }).applyToDate(date)).toEqual(
+		new Date(2020, 5, 10, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - Yearday in Normal Year", () => {
+	const date = new Date(2023, 0, 31, 0, 0, 0); // January 31st, 2023 at 00:00:00
+	expect(new RelativeDelta({ yearDay: 345 }).applyToDate(date)).toEqual(
+		new Date(2023, 11, 11, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - Yearday in Leap Year", () => {
+	const date = new Date(2020, 0, 31, 0, 0, 0); // January 31st, 2020 at 00:00:00
+	expect(new RelativeDelta({ yearDay: 345 }).applyToDate(date)).toEqual(
+		new Date(2020, 11, 10, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - nonLeapYearDay in Normal Year", () => {
+	const date = new Date(2023, 0, 31, 0, 0, 0); // January 31st, 2023 at 00:00:00
+	expect(new RelativeDelta({ nonLeapYearDay: 345 }).applyToDate(date)).toEqual(
+		new Date(2023, 11, 11, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - nonLeapYearDay in Leap Year", () => {
+	const date = new Date(2020, 0, 31, 0, 0, 0); // January 31st, 2020 at 00:00:00
+	expect(new RelativeDelta({ nonLeapYearDay: 345 }).applyToDate(date)).toEqual(
+		new Date(2020, 11, 11, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - nonLeapYearDay Exceeding Days In Year", () => {
+	const date = new Date(2023, 0, 31, 0, 0, 0); // January 31st, 2023 at 00:00:00
+	expect(new RelativeDelta({ nonLeapYearDay: 366 }).applyToDate(date)).toEqual(
+		new Date(2023, 11, 31, 0, 0, 0),
+	);
+});
+
+test("Apply To Date - nonLeapYearDay Exceeding Days In Year", () => {
+	const date = new Date(2023, 0, 31, 0, 0, 0); // January 31st, 2023 at 00:00:00
+	expect(new RelativeDelta({ nonLeapYearDay: 366 }).applyToDate(date)).toEqual(
+		new Date(2023, 11, 31, 0, 0, 0),
 	);
 });
 
@@ -252,7 +310,80 @@ test("Normalized - Date Comparison", () => {
 });
 
 /* -------------------------------------------------------------------------- */
-/*                                   ERRORS                                   */
+/*                                   WeekDay                                  */
+/* -------------------------------------------------------------------------- */
+test("WeekDay - Next Monday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: MO(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 0, 30, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Previous Monday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: ["MO", -1] }).applyToDate(date)).toEqual(
+		new Date(2023, 0, 30, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Date after 1000 Mondays", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: ["MO", 1000] }).applyToDate(date)).toEqual(
+		new Date(2042, 2, 24, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Date after -1000 Mondays", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: ["MO", -1000] }).applyToDate(date)).toEqual(
+		new Date(2003, 11, 8, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Next Tuesday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: TU(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 0, 31, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Next Wednesday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: WE(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 1, 1, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Next Thursday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: TH(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 1, 2, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Next Friday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: FR(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 1, 3, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Next Saturday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: SA(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 1, 4, 0, 0, 0),
+	);
+});
+
+test("WeekDay - Next Sunday", () => {
+	const date = new Date(2023, 0, 30, 0, 0, 0); // January 30th, 2023 at 00:00:00
+	expect(new RelativeDelta({ weekDay: SU(1) }).applyToDate(date)).toEqual(
+		new Date(2023, 1, 5, 0, 0, 0),
+	);
+});
+
+/* -------------------------------------------------------------------------- */
+/*                                   Errors                                   */
 /* -------------------------------------------------------------------------- */
 test("Error - Float not supported for time units", () => {
 	const timeUnitParams = {
@@ -301,5 +432,31 @@ test("Error - Value out of range", () => {
 		expect(() => {
 			new RelativeDelta({ [param]: value });
 		}).toThrowError();
+	}
+});
+
+test("Error - Invalid yearDay value", () => {
+	for (const value of [-1, 367]) {
+		expect(() => {
+			new RelativeDelta({ yearDay: value });
+		}).toThrowError();
+	}
+});
+
+test("Error - Invalid weekday string", () => {
+	const invalidString = "test";
+	expect(() => {
+		// @ts-expect-error Intentionally passing invalid weekday for error testing
+		new RelativeDelta({ weekDay: invalidString });
+	}).toThrowError(`Invalid weekday string: ${invalidString}`);
+});
+
+test("Error - Invalid weekday number", () => {
+	for (const value of [-1, 7]) {
+		expect(() => {
+			new RelativeDelta({ weekDay: value });
+		}).toThrowError(
+			`Invalid weekday number: ${value}. Weekday number must be an integer between 0 and 6`,
+		);
 	}
 });
