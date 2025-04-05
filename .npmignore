@@ -3,7 +3,7 @@ node_modules
 .github
 .changeset
 .vscode
-images
+coverage
 
 .env
 .DS_Store

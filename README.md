@@ -16,7 +16,7 @@
 ![GitHub License](https://img.shields.io/github/license/0DarkPhoenix/relativedelta-npm?style=for-the-badge)
 
 
-`relativedelta` is an NPM package which brings the functionality of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function from the [`dateutil` Python library](https://github.com/dateutil/dateutil) over to Javascript and Typescript.
+`relativedelta` is an NPM package which brings the functionality of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function from the [`dateutil` Python library](https://github.com/dateutil/dateutil) over to Javascript and Typescript. Starting from version 1.0.0, all features from the original `relativedelta` function are implemented.
 
 The new `RelativeDelta` function makes calculating time deltas, applying different time units to dates and converting time units into other time units easier and more readable, all while respecting varying month lengths and leap years.
 
@@ -87,16 +87,47 @@ relativedelta(dt1=current_date, dt2=previous_date)
 
 **Javascript & Typescript**
 ```javascript
-new RelativeDelta({date1: currentDate, date2: previousDate})
+new RelativeDelta({ date1: currentDate, date2: previousDate })
 ```
 
-<br>
+#### nlyearday parameter
+`nlyearday` -> `nonLeapYearDay`
 
-### Unimplemented parameters
-There are a couple of parameters which aren't implemented yet:
-- leapdays
-- weekday
-- yearday
-- nlyearday
+**Python**
+```python
+relativedelta(nlyearday=150)
+```
 
-If you want a parameter to be implemented with more priority, feel free to [open an issue](https://github.com/0DarkPhoenix/relativedelta-npm/issues)!
+**Javascript & Typescript**
+```javascript
+new RelativeDelta({ nonLeapYearDay: 150 })
+```
+
+#### Writing weekdays as a string
+Not supported -> `"MO"`, `"TU"`, `"WE"`, `"TH"`, `"FR"`, `"SA"`, `"SU"`
+
+In Python, you need to enter the weekday using an integer or an imported function. Using a string is more intuitive in my opinion than using an integer or imported function, so that's why strings are supported as well.
+
+**Python**
+```python
+from dateutil.relativedelta import MO, relativedelta
+## Monday as an integer
+relativedelta(weekday=0)
+
+## Monday as an imported function
+relativedelta(weekday=MO())
+```
+
+**Javascript & Typescript**
+```javascript
+import { MO, RelativeDelta } from 'relativedelta'
+
+// Monday as a string
+new RelativeDelta({ weekDay: "MO" })
+
+// Monday as an integer
+new RelativeDelta({ weekDay: 0 })
+
+// Monday as an imported function
+new RelativeDelta({ weekDay: MO() })
+```

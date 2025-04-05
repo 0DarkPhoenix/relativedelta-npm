@@ -1,3 +1,5 @@
+import { type DayOfWeekValue, Weekday, type WeekdayString } from "./WeekdayTypes.ts";
+
 export interface RelativeDeltaOptions {
 	/**
 	 * First date for calculating the difference between two dates.
@@ -38,6 +40,11 @@ export interface RelativeDeltaOptions {
 	days?: number;
 
 	/**
+	 * Adds the given days to the date if year is a leap year, and the date is after February 28th.
+	 */
+	leapDays?: number;
+
+	/**
 	 * Number of hours to add (or subtract if negative).
 	 */
 	hours?: number;
@@ -74,14 +81,14 @@ export interface RelativeDeltaOptions {
 	/**
 	 * Sets the day component of a date when used with `.applyToDate()`
 	 *
-	 * Must be an integer between 1 and 32.
+	 * Must be an integer between 1 and 31.
 	 *
-	 * Special case: 32 sets the day to the last date of the month.
+	 * Special case: 31 always sets the day to the last date of the month.
 	 * @example ### Set to last date of the month
 	 * ```javascript
 	 * const date = new Date(2020, 1, 14) // February 14th, 2020 (Special because this is a leap year)
 	 * // Get the last date of the month
-	 * const endOfMonth = new RelativeDelta({ day: 32 }).applyToDate(date) // Returns new Date(2020, 1, 29), so February 29th, 2020
+	 * const endOfMonth = new RelativeDelta({ day: 31 }).applyToDate(date) // Returns new Date(2020, 1, 29), so February 29th, 2020
 	 *
 	 * // If you are in a different timezone than UTC, use `.toString()` or `.toLocaleString()` to log the date to the console in your local timezone.
 	 * // When this is not done, `console.log()` will display the date in UTC (shown by the 'Z' suffix at the end of the date),
@@ -90,6 +97,56 @@ export interface RelativeDeltaOptions {
 	 * ```
 	 */
 	day?: number;
+
+	/**
+	 * Sets the next date which matches the weekday input when used with `.applyToDate()`.
+	 *
+	 * Days can be written as an integer between 0 (Monday) and 6 (Sunday) or as a string ("MO", "TU", ... , "SU")
+	 *
+	 * Finding the next or previous occurrence is done using a tuple (e.g. ["MO", 1] or ["MO", -1]). When not using a tuple, the standard is finding the next occurrence (equal to using ["MO", 1])
+	 *
+	 * @example ### Syntax options
+	 * ```javascript
+	 * // Find next Monday
+	 * new RelativeDelta({ weekDay: 0 }).applyToDate(new Date()) // 0 for Monday, 1 for Tuesday, ... , 6 for Sunday
+	 * new RelativeDelta({ weekDay: "MO" }).applyToDate(new Date())
+	 *
+	 * // Find previous Monday
+	 * new RelativeDelta({ weekDay: [0, -1] }).applyToDate(new Date()) // 0 for Monday, 1 for Tuesday, ... , 6 for Sunday
+	 * new RelativeDelta({ weekDay: ["MO", -1] }).applyToDate(new Date())
+	 *
+	 * // Find previous Monday using function
+	 * import { MO, RelativeDelta } from 'relativedelta'
+	 * new RelativeDelta({ weekDay: MO(-1) }).applyToDate(new Date())
+	 * ```
+	 * ## Tips & Examples
+	 * The examples below show some handy functions to solve common situations for finding weekdays.
+	 *
+	 * @example ### Find first Monday of the current month
+	 * ```javascript
+	 * new RelativeDelta({ days: 1, weekDay: "MO" }).applyToDate(new Date())
+	 * ```
+	 *
+	 * @example ### Find last Monday of the current month
+	 * ```javascript
+	 * new RelativeDelta({ days: 31, weekDay: ["MO", -1] }).applyToDate(new Date())
+	 * ```
+	 */
+	weekDay?: Weekday | [WeekdayString, number] | WeekdayString | number;
+
+	/**
+	 * Sets the day of the year
+	 *
+	 * Must be an integer between 1 and 366
+	 */
+	yearDay?: number;
+
+	/**
+	 * Sets the day of the year, ignoring leap days.
+	 *
+	 * Must be an integer between 1 and 366
+	 */
+	nonLeapYearDay?: number;
 
 	/**
 	 * Sets the hour component of a date when used with `.applyToDate()`
@@ -135,6 +192,7 @@ export class RelativeDelta {
 	years: number;
 	months: number;
 	days: number;
+	leapDays: number;
 	hours: number;
 	minutes: number;
 	seconds: number;
@@ -142,10 +200,12 @@ export class RelativeDelta {
 	year: number | null;
 	month: number | null;
 	day: number | null;
+	weekDay: Weekday | null;
 	hour: number | null;
 	minute: number | null;
 	second: number | null;
 	millisecond: number | null;
+	private dayModifiedInternally: boolean;
 	/**
 	 * A TypeScript implementation of the [`relativedelta`](https://dateutil.readthedocs.io/en/stable/relativedelta.html) function
 	 * from the [`dateutil`](https://github.com/dateutil/dateutil) Python library.
@@ -195,12 +255,22 @@ export class RelativeDelta {
 			throw new Error("Both date1 and date2 must be provided for date comparison.");
 		}
 
+		// Create a flag to skip the day validation when the day number has been modified by the function
+		// Setting enumerable to false so it doesn't show when console logging the RelativeDelta class or when comparing values in test
+		this.dayModifiedInternally = false;
+		Object.defineProperty(this, "dayModifiedInternally", {
+			value: false,
+			enumerable: false,
+			writable: true,
+		});
+
 		// If both dates are provided, calculate the difference
 		if (date1 && date2) {
 			// Create temporary values to hold our calculations
 			let years = 0;
 			let months = 0;
 			let days = 0;
+			this.leapDays = 0;
 			let hours = 0;
 			let minutes = 0;
 			let seconds = 0;
@@ -215,6 +285,23 @@ export class RelativeDelta {
 			const later = d1 <= d2 ? d2 : d1;
 			const sign = d1 <= d2 ? -1 : 1;
 
+			// Count leap days between the two dates
+			let leapDayCount = 0;
+			const startYear = earlier.getFullYear();
+			const endYear = later.getFullYear();
+
+			for (let year = startYear; year <= endYear; year++) {
+				if (this.isLeapYear(year)) {
+					// Create Feb 29 of the leap year
+					const leapDay = new Date(year, 1, 29); // Month is 0-indexed, so 1 = February
+
+					// Check if this leap day falls between our dates
+					if (leapDay >= earlier && leapDay <= later) {
+						leapDayCount++;
+					}
+				}
+			}
+
 			// Calculate exact day difference for verification
 			// Use UTC dates to avoid DST issues
 			const earlierUtc = Date.UTC(
@@ -223,10 +310,10 @@ export class RelativeDelta {
 				earlier.getDate(),
 			);
 			const laterUtc = Date.UTC(later.getFullYear(), later.getMonth(), later.getDate());
-			const msPerDay = 24 * 60 * 60 * 1000;
+			const msPerDay = 86400000; // 24 * 60 * 60 * 1000
 			const exactDayDiff = Math.round((laterUtc - earlierUtc) / msPerDay);
 
-			// Calculate years difference
+			// Calculate years difference by subtracting the year numbers
 			years = later.getFullYear() - earlier.getFullYear();
 
 			// Adjust months
@@ -234,6 +321,7 @@ export class RelativeDelta {
 				later.getMonth() < earlier.getMonth() ||
 				(later.getMonth() === earlier.getMonth() && later.getDate() < earlier.getDate())
 			) {
+				// Borrow a year when one of the dates has crossed over into the next year (e.g. Dec 2020 and Mar 2021)
 				years--;
 				months = 12 + later.getMonth() - earlier.getMonth();
 			} else {
@@ -245,7 +333,6 @@ export class RelativeDelta {
 				// Move back one month and add the days from previous month
 				const prevMonth = new Date(later.getFullYear(), later.getMonth(), 0).getDate();
 				days = later.getDate() + (prevMonth - earlier.getDate());
-
 				// Adjust months (may need to adjust years too)
 				if (months === 0) {
 					months = 11;
@@ -261,7 +348,6 @@ export class RelativeDelta {
 			// First, calculate how many days we've accounted for in years and months
 			let yearMonthDays = 0;
 			let tempDate = new Date(earlier);
-
 			// Add years
 			if (years !== 0) {
 				tempDate.setFullYear(tempDate.getFullYear() + years);
@@ -274,7 +360,6 @@ export class RelativeDelta {
 				tempDate = new Date(earlier);
 				tempDate.setFullYear(earlier.getFullYear() + years);
 				const beforeMonths = tempDate.getTime();
-
 				tempDate.setMonth(tempDate.getMonth() + months);
 				// Handle month-end edge cases
 				if (earlier.getDate() > 28) {
@@ -288,7 +373,6 @@ export class RelativeDelta {
 						tempDate.setDate(Math.min(earlier.getDate(), maxDay));
 					}
 				}
-
 				const monthDiff = Math.round((tempDate.getTime() - beforeMonths) / msPerDay);
 				yearMonthDays += monthDiff;
 			}
@@ -305,6 +389,7 @@ export class RelativeDelta {
 			seconds = later.getSeconds() - earlier.getSeconds();
 			milliseconds = later.getMilliseconds() - earlier.getMilliseconds();
 
+			// Correct any discrepancy
 			const applySign = (value: number, sign: number): number =>
 				value === 0 ? 0 : value * sign;
 
@@ -312,6 +397,7 @@ export class RelativeDelta {
 			this.years = applySign(years, sign);
 			this.months = applySign(months, sign);
 			this.days = applySign(days, sign);
+			this.leapDays = applySign(leapDayCount, sign);
 			this.hours = applySign(hours, sign);
 			this.minutes = applySign(minutes, sign);
 			this.seconds = applySign(seconds, sign);
@@ -321,23 +407,21 @@ export class RelativeDelta {
 			this.year = null;
 			this.month = null;
 			this.day = null;
+			this.weekDay = null;
 			this.hour = null;
 			this.minute = null;
 			this.second = null;
 			this.millisecond = null;
 		} else {
-			// Original logic for delta creation
-			this.years = options.years || 0;
-			this.months = options.months || 0;
-
-			// Handle weeks parameter like Python does (convert to days)
-			const weeks = options.weeks || 0;
-			this.days = (options.days || 0) + weeks * 7;
-
-			this.hours = options.hours || 0;
-			this.minutes = options.minutes || 0;
-			this.seconds = options.seconds || 0;
-			this.milliseconds = options.milliseconds || 0;
+			this.years = options.years ?? 0;
+			this.months = options.months ?? 0;
+			const weeks = options.weeks ?? 0;
+			this.days = (options.days ?? 0) + weeks * 7;
+			this.hours = options.hours ?? 0;
+			this.minutes = options.minutes ?? 0;
+			this.seconds = options.seconds ?? 0;
+			this.milliseconds = options.milliseconds ?? 0;
+			this.leapDays = options.leapDays ?? 0;
 
 			// Initialize absolute values (singular form)
 			this.year = options.year !== undefined ? options.year : null;
@@ -348,13 +432,55 @@ export class RelativeDelta {
 			this.second = options.second !== undefined ? options.second : null;
 			this.millisecond = options.millisecond !== undefined ? options.millisecond : null;
 
-			this._validateInput();
+			// Handle the weekday parameter
+			this.weekDay = null;
+			if (options.weekDay !== undefined) {
+				if (options.weekDay instanceof Weekday) {
+					this.weekDay = options.weekDay;
+				} else if (Array.isArray(options.weekDay)) {
+					const [day, n] = options.weekDay;
+					this.weekDay = new Weekday(day, n);
+				} else if (typeof options.weekDay === "string") {
+					this.weekDay = new Weekday(options.weekDay);
+				} else if (typeof options.weekDay === "number") {
+					this.weekDay = new Weekday(options.weekDay as DayOfWeekValue);
+				}
+			}
+
+			// Handle yearDay and nonLeapYearDay
+			let yearDay = null;
+			if (options.nonLeapYearDay) {
+				yearDay = options.nonLeapYearDay;
+			} else if (options.yearDay) {
+				yearDay = options.yearDay;
+				if (yearDay > 59) {
+					this.leapDays = -1;
+				}
+			}
+
+			if (yearDay != null) {
+				// Array of cumulative days at the end of each month in a 366-day year
+				const yearDayIndex = [31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 366];
+
+				const monthIndex = yearDayIndex.findIndex((days) => yearDay <= days);
+
+				// Handle case where yearDay exceeds the max day in a year
+				if (monthIndex === -1 || yearDay < 1) {
+					throw new Error(`Invalid yearDay value (${yearDay})`);
+				}
+
+				this.month = monthIndex + 1;
+				// biome-ignore lint/style/noNonNullAssertion: yearDayIndex as an object can never be undefined
+				this.day = monthIndex === 0 ? yearDay : yearDay - yearDayIndex[monthIndex - 1]!;
+				this.dayModifiedInternally = true;
+			}
+
+			this.validateInput();
+
+			// Normalize the values
+			this.fix();
 		}
-
-		// Normalize the values
-		this._fix();
 	}
-
 	/**
 	 * Apply the relative delta to the provided date
 	 *
@@ -443,12 +569,49 @@ export class RelativeDelta {
 		}
 
 		// Apply days and time separately
-		if (this.days !== 0) result.setDate(result.getDate() + this.days);
+		let daysToAdd = this.days;
+
+		// Handle leapdays - add the specified leapdays if:
+		// 1. We're in a leap year
+		// 2. The current date is after February 28
+		if (
+			this.leapDays &&
+			this.isLeapYear(result.getFullYear()) &&
+			result.getMonth() > 1 // After February (0-indexed months)
+		) {
+			daysToAdd += this.leapDays;
+		}
+
+		if (daysToAdd !== 0) result.setDate(result.getDate() + daysToAdd);
 		if (this.hours !== 0) result.setHours(result.getHours() + this.hours);
 		if (this.minutes !== 0) result.setMinutes(result.getMinutes() + this.minutes);
 		if (this.seconds !== 0) result.setSeconds(result.getSeconds() + this.seconds);
 		if (this.milliseconds !== 0)
 			result.setMilliseconds(result.getMilliseconds() + this.milliseconds);
+
+		// Apply weekday if specified
+		if (this.weekDay) {
+			const weekDay = this.weekDay.weekDay;
+			const nth = this.weekDay.n || 1;
+
+			// Calculate days to jump - base jump is for n occurrences minus the first one
+			let jumpDays = (Math.abs(nth) - 1) * 7;
+
+			// Get current weekday (0-6, where 0 is Monday to match our enum)
+			const currentWeekday = (result.getDay() + 6) % 7; // Convert from JS Sunday=0 to Monday=0
+
+			if (nth > 0) {
+				// For positive nth, calculate days to the next occurrence of weekDay
+				jumpDays += (7 - currentWeekday + weekDay) % 7;
+			} else {
+				// For negative nth, calculate days to the previous occurrence of weekDay
+				jumpDays += (currentWeekday - weekDay) % 7;
+				jumpDays *= -1; // Make it negative to go backwards
+			}
+
+			// Apply the jump
+			result.setDate(result.getDate() + jumpDays);
+		}
 
 		return result;
 	}
@@ -461,24 +624,23 @@ export class RelativeDelta {
 	 */
 	toSeconds(referenceDate: Date = new Date()): number {
 		// Constants for time unit conversions
-		const millisecondsPerDay = 86400000;
+		const millisecondsPerDay = 86400000; // 24 * 60 * 60 * 1000
 		const secondsPerDay = 86400; // 24 * 60 * 60
 		const secondsPerHour = 3600; // 60 * 60
 		const secondsPerMinute = 60;
 
-		let totalDays = this.days;
+		let totalDays = this.days + this.leapDays;
 
-		// If years or months is not 0, use more complex logic to determine the total number of days
+		// If years or months is not 0, calculate their contribution to days
 		if (this.years !== 0 || this.months !== 0) {
-			// Create date copies for calculation
 			const startDate = new Date(referenceDate);
 			const endDate = new Date(referenceDate);
 
-			// Set to same time to avoid DST issues
+			// Set to noon to avoid DST issues
 			startDate.setHours(12, 0, 0, 0);
 			endDate.setHours(12, 0, 0, 0);
 
-			// Apply years first, then months - this matches Python's approach
+			// Apply years first
 			if (this.years !== 0) {
 				endDate.setFullYear(endDate.getFullYear() + this.years);
 			}
@@ -488,7 +650,7 @@ export class RelativeDelta {
 				const targetMonth = endDate.getMonth() + this.months;
 				const yearAdjustment = Math.floor(targetMonth / 12);
 				endDate.setFullYear(endDate.getFullYear() + yearAdjustment);
-				endDate.setMonth(((targetMonth % 12) + 12) % 12); // Ensure positive modulo
+				endDate.setMonth(((targetMonth % 12) + 12) % 12);
 			}
 
 			// Handle month end edge cases
@@ -501,35 +663,17 @@ export class RelativeDelta {
 				endDate.setDate(maxDayInMonth);
 			}
 
-			// Calculate exact days difference between the two dates
-			// Using local timezone instead of UTC
-			const startTime = new Date(
+			// Calculate days difference - critical for leap year handling
+			const startUtc = Date.UTC(
 				startDate.getFullYear(),
 				startDate.getMonth(),
 				startDate.getDate(),
-			).getTime();
-
-			const endTime = new Date(
-				endDate.getFullYear(),
-				endDate.getMonth(),
-				endDate.getDate(),
-			).getTime();
-
-			// Convert ms to days and add to total
-			const daysDiff = Math.floor((endTime - startTime) / millisecondsPerDay);
-			totalDays += daysDiff;
-		}
-
-		// For our specific test case, adjust the calculation
-		if (this.years === 1 && this.months === 11 && this.days === 30) {
-			// This fixes the Dec 31, 2021 to Jan 1, 2020 case
-			return (
-				730 * secondsPerDay +
-				this.hours * secondsPerHour +
-				this.minutes * secondsPerMinute +
-				this.seconds +
-				this.milliseconds / 1000
 			);
+			const endUtc = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+			// Use Math.round to account for any floating-point precision issues
+			const daysDiff = Math.round((endUtc - startUtc) / millisecondsPerDay);
+			totalDays += daysDiff;
 		}
 
 		// Calculate total seconds
@@ -540,7 +684,7 @@ export class RelativeDelta {
 			this.seconds +
 			this.milliseconds / 1000;
 
-		return this._handleFloatingPoint(totalSeconds);
+		return this.handleFloatingPoint(totalSeconds);
 	}
 
 	/**
@@ -600,13 +744,12 @@ export class RelativeDelta {
 	 * @returns Total number of months
 	 */
 	toMonths(referenceDate: Date = new Date()): number {
-		// Python uses a fixed constant for days per month
 		const preciseDaysPerMonth = 30.436875; // 365.2425/12
 
 		// Calculate total days including the contribution from years and months
 		const totalDays = this.toDays(referenceDate);
 
-		// Convert days to months using Python's constant
+		// Convert days to months
 		const monthsFromDays = totalDays / preciseDaysPerMonth;
 
 		// Round to handle floating point precision
@@ -640,17 +783,15 @@ export class RelativeDelta {
 	 */
 	normalized(): RelativeDelta {
 		const days = Math.trunc(this.days);
-		const hoursFloat = this._handleFloatingPoint(this.hours + 24 * (this.days - days));
+		const hoursFloat = this.handleFloatingPoint(this.hours + 24 * (this.days - days));
 		const hours = Math.trunc(hoursFloat);
-		const minutesFloat = this._handleFloatingPoint(this.minutes + 60 * (hoursFloat - hours));
+		const minutesFloat = this.handleFloatingPoint(this.minutes + 60 * (hoursFloat - hours));
 		const minutes = Math.trunc(minutesFloat);
-		const secondsFloat = this._handleFloatingPoint(
-			this.seconds + 60 * (minutesFloat - minutes),
-		);
+		const secondsFloat = this.handleFloatingPoint(this.seconds + 60 * (minutesFloat - minutes));
 		const seconds = Math.floor(secondsFloat);
 		const milliseconds = Math.round(this.milliseconds + 1000 * (secondsFloat - seconds));
 
-		// Create new object with normalized values (constructor will call _fix() to handle any overflow)
+		// Create new object with normalized values (constructor will call fix() to handle any overflow)
 		return new RelativeDelta({
 			years: this.years,
 			months: this.months,
@@ -663,12 +804,12 @@ export class RelativeDelta {
 	}
 
 	/**
-	 * Fix overflow in all attributes, similar to Python's _fix()
+	 * Fix overflow in all attributes
 	 */
-	private _fix(): void {
+	private fix(): void {
 		// Fix milliseconds overflow
 		if (Math.abs(this.milliseconds) >= 1000) {
-			const sign = this._sign(this.milliseconds);
+			const sign = this.sign(this.milliseconds);
 			const div = Math.floor(Math.abs(this.milliseconds) / 1000);
 			this.milliseconds = (Math.abs(this.milliseconds) % 1000) * sign;
 			this.seconds += div * sign;
@@ -676,7 +817,7 @@ export class RelativeDelta {
 
 		// Fix seconds overflow
 		if (Math.abs(this.seconds) >= 60) {
-			const sign = this._sign(this.seconds);
+			const sign = this.sign(this.seconds);
 			const div = Math.floor(Math.abs(this.seconds) / 60);
 			this.seconds = (Math.abs(this.seconds) % 60) * sign;
 			this.minutes += div * sign;
@@ -684,7 +825,7 @@ export class RelativeDelta {
 
 		// Fix minutes overflow
 		if (Math.abs(this.minutes) >= 60) {
-			const sign = this._sign(this.minutes);
+			const sign = this.sign(this.minutes);
 			const div = Math.floor(Math.abs(this.minutes) / 60);
 			this.minutes = (Math.abs(this.minutes) % 60) * sign;
 			this.hours += div * sign;
@@ -692,7 +833,7 @@ export class RelativeDelta {
 
 		// Fix hours overflow
 		if (Math.abs(this.hours) >= 24) {
-			const sign = this._sign(this.hours);
+			const sign = this.sign(this.hours);
 			const div = Math.floor(Math.abs(this.hours) / 24);
 			this.hours = (Math.abs(this.hours) % 24) * sign;
 			this.days += div * sign;
@@ -700,7 +841,7 @@ export class RelativeDelta {
 
 		// Fix months overflow
 		if (Math.abs(this.months) >= 12) {
-			const sign = this._sign(this.months);
+			const sign = this.sign(this.months);
 			const div = Math.floor(Math.abs(this.months) / 12);
 			this.months = (Math.abs(this.months) % 12) * sign;
 			this.years += div * sign;
@@ -710,11 +851,11 @@ export class RelativeDelta {
 	/**
 	 * Return the sign of a number (-1, 0, 1)
 	 */
-	private _sign(x: number): number {
+	private sign(x: number): number {
 		return x === 0 ? 0 : x > 0 ? 1 : -1;
 	}
 
-	private _handleFloatingPoint(x: number): number {
+	private handleFloatingPoint(x: number): number {
 		// For values that appear to be close to integers (common with time calculations)
 		if (Math.abs(Math.round(x) - x) < 1e-6) {
 			return Math.round(x);
@@ -723,7 +864,7 @@ export class RelativeDelta {
 		return Math.round(x * 1e10) / 1e10;
 	}
 
-	private _validateInput() {
+	private validateInput() {
 		// Check if years and months are integers
 		if (!Number.isInteger(this.years) || !Number.isInteger(this.months)) {
 			throw new Error("Floats are not supported for parameters 'years' and 'months'");
@@ -733,14 +874,19 @@ export class RelativeDelta {
 		const absoluteValues = [
 			{ name: "year", value: this.year, range: { min: 1, max: 9999 } },
 			{ name: "month", value: this.month, range: { min: 1, max: 12 } },
-			{ name: "day", value: this.day, range: { min: 1, max: 31 } },
+			{
+				name: "day",
+				value: this.day,
+				skipRangeCheck: this.dayModifiedInternally,
+				range: { min: 1, max: 31 },
+			},
 			{ name: "hour", value: this.hour, range: { min: 1, max: 23 } },
 			{ name: "minute", value: this.minute, range: { min: 1, max: 59 } },
 			{ name: "second", value: this.second, range: { min: 1, max: 59 } },
 			{ name: "millisecond", value: this.millisecond, range: { min: 1, max: 999 } },
 		];
 		for (const absoluteValue of absoluteValues) {
-			const { name, value, range } = absoluteValue;
+			const { name, value, range, skipRangeCheck } = absoluteValue;
 
 			// Skip the validation if the value is null
 			if (value === null) {
@@ -753,10 +899,19 @@ export class RelativeDelta {
 					"Floats are not supported for parameters 'year', 'month', 'day', 'hour', 'minute', 'second' and 'millisecond'",
 				);
 			}
-			// Check if the value is within the specified range
-			if (value < range.min || value > range.max) {
+			// Check if the value is within the specified range, but skip range check if configured
+			if (!skipRangeCheck && (value < range.min || value > range.max)) {
 				throw new Error(`parameter '${name}' is out of range: ${range.min}...${range.max}`);
 			}
 		}
+	}
+
+	/**
+	 * Check if a year is a leap year
+	 * @param year - The year to check
+	 * @returns True if the year is a leap year, false otherwise
+	 */
+	private isLeapYear(year: number): boolean {
+		return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 	}
 }
