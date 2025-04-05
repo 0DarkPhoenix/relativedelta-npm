@@ -1,5 +1,11 @@
 # relativedelta
 
+## 1.0.0
+
+### Major Changes
+
+- f9a21a3: Added leapDays, weekDay, yearDay and nonLeapYearDay. Now all features from python's relativedelta are implemented
+
 ## 0.3.1
 
 ### Patch Changes
