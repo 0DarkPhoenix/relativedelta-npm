@@ -31,6 +31,7 @@ jobs:
             
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
+              continue-on-error: true # Prevent the pipeline from failing when an issue occurred when uploading the coverage
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
                 path-to-lcov: ./coverage/lcov.info

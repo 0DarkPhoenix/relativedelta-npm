@@ -285,103 +285,56 @@ export class RelativeDelta {
 			const later = d1 <= d2 ? d2 : d1;
 			const sign = d1 <= d2 ? -1 : 1;
 
+			// Cache commonly used values
+			const earlierYear = earlier.getFullYear();
+			const earlierMonth = earlier.getMonth();
+			const earlierDate = earlier.getDate();
+			const laterYear = later.getFullYear();
+			const laterMonth = later.getMonth();
+			const laterDate = later.getDate();
+
 			// Count leap days between the two dates
-			let leapDayCount = 0;
-			const startYear = earlier.getFullYear();
-			const endYear = later.getFullYear();
-
-			for (let year = startYear; year <= endYear; year++) {
-				if (this.isLeapYear(year)) {
-					// Create Feb 29 of the leap year
-					const leapDay = new Date(year, 1, 29); // Month is 0-indexed, so 1 = February
-
-					// Check if this leap day falls between our dates
-					if (leapDay >= earlier && leapDay <= later) {
-						leapDayCount++;
-					}
-				}
-			}
+			const leapDayCount = this.countLeapDaysBetween(earlier, later);
 
 			// Calculate exact day difference for verification
 			// Use UTC dates to avoid DST issues
-			const earlierUtc = Date.UTC(
-				earlier.getFullYear(),
-				earlier.getMonth(),
-				earlier.getDate(),
-			);
-			const laterUtc = Date.UTC(later.getFullYear(), later.getMonth(), later.getDate());
+			const earlierUtc = Date.UTC(earlierYear, earlierMonth, earlierDate);
+			const laterUtc = Date.UTC(laterYear, laterMonth, laterDate);
 			const msPerDay = 86400000; // 24 * 60 * 60 * 1000
-			const exactDayDiff = Math.round((laterUtc - earlierUtc) / msPerDay);
 
-			// Calculate years difference by subtracting the year numbers
+			// Simplified approach using Date arithmetic
+			const startOfEarlier = new Date(
+				Date.UTC(earlier.getFullYear(), earlier.getMonth(), earlier.getDate()),
+			);
+			const startOfLater = new Date(
+				Date.UTC(later.getFullYear(), later.getMonth(), later.getDate()),
+			);
+
+			// Calculate years difference
 			years = later.getFullYear() - earlier.getFullYear();
 
-			// Adjust months
-			if (
-				later.getMonth() < earlier.getMonth() ||
-				(later.getMonth() === earlier.getMonth() && later.getDate() < earlier.getDate())
-			) {
-				// Borrow a year when one of the dates has crossed over into the next year (e.g. Dec 2020 and Mar 2021)
-				years--;
-				months = 12 + later.getMonth() - earlier.getMonth();
-			} else {
-				months = later.getMonth() - earlier.getMonth();
-			}
-
-			// Adjust for day of month differences
+			// Calculate months more directly
+			let monthDiff = later.getMonth() - earlier.getMonth();
+			// Adjust years and months based on day comparison
 			if (later.getDate() < earlier.getDate()) {
-				// Move back one month and add the days from previous month
-				const prevMonth = new Date(later.getFullYear(), later.getMonth(), 0).getDate();
-				days = later.getDate() + (prevMonth - earlier.getDate());
-				// Adjust months (may need to adjust years too)
-				if (months === 0) {
-					months = 11;
-					years--;
-				} else {
-					months--;
-				}
-			} else {
-				days = later.getDate() - earlier.getDate();
+				monthDiff--;
 			}
+			if (monthDiff < 0) {
+				years--;
+				monthDiff += 12;
+			}
+			months = monthDiff;
 
-			// Verify and correct our calculation to match exact day count
-			// First, calculate how many days we've accounted for in years and months
-			let yearMonthDays = 0;
-			let tempDate = new Date(earlier);
-			// Add years
-			if (years !== 0) {
-				tempDate.setFullYear(tempDate.getFullYear() + years);
-				const yearDiff = Math.round((tempDate.getTime() - earlier.getTime()) / msPerDay);
-				yearMonthDays += yearDiff;
+			// Calculate days directly from UTC timestamps
+			const tempDate = new Date(startOfEarlier);
+			tempDate.setUTCFullYear(tempDate.getUTCFullYear() + years);
+			tempDate.setUTCMonth(tempDate.getUTCMonth() + months);
+			// Handle month-end edge cases
+			if (tempDate.getUTCDate() !== startOfEarlier.getUTCDate()) {
+				// We landed on a different day due to month length differences
+				tempDate.setUTCDate(0); // Move to last day of previous month
 			}
-
-			// Add months
-			if (months !== 0) {
-				tempDate = new Date(earlier);
-				tempDate.setFullYear(earlier.getFullYear() + years);
-				const beforeMonths = tempDate.getTime();
-				tempDate.setMonth(tempDate.getMonth() + months);
-				// Handle month-end edge cases
-				if (earlier.getDate() > 28) {
-					// Ensure we're on the correct date or the last day of the month
-					const maxDay = new Date(
-						tempDate.getFullYear(),
-						tempDate.getMonth() + 1,
-						0,
-					).getDate();
-					if (tempDate.getDate() !== earlier.getDate() && tempDate.getDate() !== maxDay) {
-						tempDate.setDate(Math.min(earlier.getDate(), maxDay));
-					}
-				}
-				const monthDiff = Math.round((tempDate.getTime() - beforeMonths) / msPerDay);
-				yearMonthDays += monthDiff;
-			}
-
-			// Adjust days to match exact day count
-			const calculatedDays = yearMonthDays + days;
-			if (calculatedDays !== exactDayDiff) {
-				days += exactDayDiff - calculatedDays;
-			}
+			days = Math.round((startOfLater.getTime() - tempDate.getTime()) / msPerDay);
 
 			// Time components
 			hours = later.getHours() - earlier.getHours();
@@ -631,60 +584,63 @@ export class RelativeDelta {
 
 		let totalDays = this.days + this.leapDays;
 
-		// If years or months is not 0, calculate their contribution to days
-		if (this.years !== 0 || this.months !== 0) {
-			const startDate = new Date(referenceDate);
-			const endDate = new Date(referenceDate);
+		const calculateTotalSeconds = (): number => {
+			const totalSeconds =
+				totalDays * secondsPerDay +
+				this.hours * secondsPerHour +
+				this.minutes * secondsPerMinute +
+				this.seconds +
+				this.milliseconds / 1000;
 
-			// Set to noon to avoid DST issues
-			startDate.setHours(12, 0, 0, 0);
-			endDate.setHours(12, 0, 0, 0);
+			return this.handleFloatingPoint(totalSeconds);
+		};
 
-			// Apply years first
-			if (this.years !== 0) {
-				endDate.setFullYear(endDate.getFullYear() + this.years);
-			}
-
-			// Then apply months
-			if (this.months !== 0) {
-				const targetMonth = endDate.getMonth() + this.months;
-				const yearAdjustment = Math.floor(targetMonth / 12);
-				endDate.setFullYear(endDate.getFullYear() + yearAdjustment);
-				endDate.setMonth(((targetMonth % 12) + 12) % 12);
-			}
-
-			// Handle month end edge cases
-			const maxDayInMonth = new Date(
-				endDate.getFullYear(),
-				endDate.getMonth() + 1,
-				0,
-			).getDate();
-			if (endDate.getDate() > maxDayInMonth) {
-				endDate.setDate(maxDayInMonth);
-			}
-
-			// Calculate days difference - critical for leap year handling
-			const startUtc = Date.UTC(
-				startDate.getFullYear(),
-				startDate.getMonth(),
-				startDate.getDate(),
-			);
-			const endUtc = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-
-			// Use Math.round to account for any floating-point precision issues
-			const daysDiff = Math.round((endUtc - startUtc) / millisecondsPerDay);
-			totalDays += daysDiff;
+		// Return early if years and months are set to 0
+		if (this.years === 0 && this.months === 0) {
+			return calculateTotalSeconds();
 		}
 
-		// Calculate total seconds
-		const totalSeconds =
-			totalDays * secondsPerDay +
-			this.hours * secondsPerHour +
-			this.minutes * secondsPerMinute +
-			this.seconds +
-			this.milliseconds / 1000;
+		// If years or months is not 0, calculate their contribution to days
+		const startDate = new Date(referenceDate);
+		const endDate = new Date(referenceDate);
 
-		return this.handleFloatingPoint(totalSeconds);
+		// Set to noon to avoid DST issues
+		startDate.setHours(12, 0, 0, 0);
+		endDate.setHours(12, 0, 0, 0);
+
+		// Apply years first
+		if (this.years !== 0) {
+			endDate.setFullYear(endDate.getFullYear() + this.years);
+		}
+
+		// Then apply months
+		if (this.months !== 0) {
+			const targetMonth = endDate.getMonth() + this.months;
+			const yearAdjustment = Math.floor(targetMonth / 12);
+			endDate.setFullYear(endDate.getFullYear() + yearAdjustment);
+			endDate.setMonth(((targetMonth % 12) + 12) % 12);
+		}
+
+		// Handle month end edge cases
+		const maxDayInMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
+		if (endDate.getDate() > maxDayInMonth) {
+			endDate.setDate(maxDayInMonth);
+		}
+
+		// Calculate days difference - critical for leap year handling
+		const startUtc = Date.UTC(
+			startDate.getFullYear(),
+			startDate.getMonth(),
+			startDate.getDate(),
+		);
+		const endUtc = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+		// Use Math.round to account for any floating-point precision issues
+		const daysDiff = Math.round((endUtc - startUtc) / millisecondsPerDay);
+		totalDays += daysDiff;
+
+		// Calculate total seconds
+		return calculateTotalSeconds();
 	}
 
 	/**
@@ -804,58 +760,47 @@ export class RelativeDelta {
 	}
 
 	/**
+	 * Utility method to handle unit overflow calculations
+	 * @param value - The current unit value to check for overflow
+	 * @param carryTo - The current value of the next larger unit
+	 * @param max - The maximum allowed value before overflow
+	 * @returns Tuple of [updated value, updated carryTo]
+	 */
+	private fixUnit(value: number, carryTo: number, max: number): [number, number] {
+		if (value === 0) return [0, carryTo];
+
+		const absValue = Math.abs(value);
+		if (absValue < max) return [value, carryTo];
+
+		const sign = value < 0 ? -1 : 1;
+		const div = absValue < 2147483648 ? (absValue / max) | 0 : Math.floor(absValue / max);
+		return [(absValue % max) * sign, carryTo + div * sign];
+	}
+
+	/**
 	 * Fix overflow in all attributes
 	 */
 	private fix(): void {
 		// Fix milliseconds overflow
-		if (Math.abs(this.milliseconds) >= 1000) {
-			const sign = this.sign(this.milliseconds);
-			const div = Math.floor(Math.abs(this.milliseconds) / 1000);
-			this.milliseconds = (Math.abs(this.milliseconds) % 1000) * sign;
-			this.seconds += div * sign;
-		}
+		[this.milliseconds, this.seconds] = this.fixUnit(this.milliseconds, this.seconds, 1000);
 
 		// Fix seconds overflow
-		if (Math.abs(this.seconds) >= 60) {
-			const sign = this.sign(this.seconds);
-			const div = Math.floor(Math.abs(this.seconds) / 60);
-			this.seconds = (Math.abs(this.seconds) % 60) * sign;
-			this.minutes += div * sign;
-		}
+		[this.seconds, this.minutes] = this.fixUnit(this.seconds, this.minutes, 60);
 
 		// Fix minutes overflow
-		if (Math.abs(this.minutes) >= 60) {
-			const sign = this.sign(this.minutes);
-			const div = Math.floor(Math.abs(this.minutes) / 60);
-			this.minutes = (Math.abs(this.minutes) % 60) * sign;
-			this.hours += div * sign;
-		}
+		[this.minutes, this.hours] = this.fixUnit(this.minutes, this.hours, 60);
 
 		// Fix hours overflow
-		if (Math.abs(this.hours) >= 24) {
-			const sign = this.sign(this.hours);
-			const div = Math.floor(Math.abs(this.hours) / 24);
-			this.hours = (Math.abs(this.hours) % 24) * sign;
-			this.days += div * sign;
-		}
+		[this.hours, this.days] = this.fixUnit(this.hours, this.days, 24);
 
 		// Fix months overflow
-		if (Math.abs(this.months) >= 12) {
-			const sign = this.sign(this.months);
-			const div = Math.floor(Math.abs(this.months) / 12);
-			this.months = (Math.abs(this.months) % 12) * sign;
-			this.years += div * sign;
-		}
-	}
-
-	/**
-	 * Return the sign of a number (-1, 0, 1)
-	 */
-	private sign(x: number): number {
-		return x === 0 ? 0 : x > 0 ? 1 : -1;
+		[this.months, this.years] = this.fixUnit(this.months, this.years, 12);
 	}
 
 	private handleFloatingPoint(x: number): number {
+		// Return the number when it is an integer
+		if (Number.isInteger(x)) return x;
+
 		// For values that appear to be close to integers (common with time calculations)
 		if (Math.abs(Math.round(x) - x) < 1e-6) {
 			return Math.round(x);
@@ -907,11 +852,54 @@ export class RelativeDelta {
 	}
 
 	/**
-	 * Check if a year is a leap year
+	 * Check if a year is a leap year.
 	 * @param year - The year to check
 	 * @returns True if the year is a leap year, false otherwise
 	 */
 	private isLeapYear(year: number): boolean {
-		return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+		const result = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+		return result;
+	}
+
+	// Calculate leap years between two dates more efficiently
+	private countLeapDaysBetween(start: Date, end: Date): number {
+		// Adjust dates to ensure we're correctly counting Feb 29
+		const startYear = start.getFullYear();
+		const endYear = end.getFullYear();
+
+		// Count leap years in the full year range
+		const leapYearsCount = this.countLeapYears(startYear, endYear);
+
+		// Adjust for partial years
+		let adjustment = 0;
+
+		// If start date is after Feb 29 in a leap year, subtract 1
+		if (
+			this.isLeapYear(startYear) &&
+			(start.getMonth() > 1 || (start.getMonth() === 1 && start.getDate() > 29))
+		) {
+			adjustment--;
+		}
+
+		// If end date is before Feb 29 in a leap year, subtract 1
+		if (
+			this.isLeapYear(endYear) &&
+			(end.getMonth() < 1 || (end.getMonth() === 1 && end.getDate() < 29))
+		) {
+			adjustment--;
+		}
+
+		return leapYearsCount + adjustment;
+	}
+
+	private countLeapYears(startYear: number, endYear: number): number {
+		// Formula for counting leap years in a range
+		const leapsBeforeEnd =
+			Math.floor(endYear / 4) - Math.floor(endYear / 100) + Math.floor(endYear / 400);
+		const leapsBeforeStart =
+			Math.floor((startYear - 1) / 4) -
+			Math.floor((startYear - 1) / 100) +
+			Math.floor((startYear - 1) / 400);
+		return leapsBeforeEnd - leapsBeforeStart;
 	}
 }
