@@ -1,5 +1,11 @@
 # relativedelta
 
+## 1.1.0
+
+### Minor Changes
+
+- 4af1a02: Simplified code and improved performance
+
 ## 1.0.0
 
 ### Major Changes
