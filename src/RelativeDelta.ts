@@ -124,12 +124,12 @@ export interface RelativeDeltaOptions {
 	 *
 	 * @example ### Find first Monday of the current month
 	 * ```javascript
-	 * new RelativeDelta({ days: 1, weekDay: "MO" }).applyToDate(new Date())
+	 * new RelativeDelta({ day: 1, weekDay: "MO" }).applyToDate(new Date())
 	 * ```
 	 *
 	 * @example ### Find last Monday of the current month
 	 * ```javascript
-	 * new RelativeDelta({ days: 31, weekDay: ["MO", -1] }).applyToDate(new Date())
+	 * new RelativeDelta({ day: 31, weekDay: ["MO", -1] }).applyToDate(new Date())
 	 * ```
 	 */
 	weekDay?: Weekday | [WeekdayString, number] | WeekdayString | number;
@@ -213,7 +213,7 @@ export class RelativeDelta {
 	 * `RelativeDelta` is a class which can determine the time difference between two dates,
 	 * apply a time delta to a date, and convert time units into other time units, all while respecting varying month lengths and leap years.
 	 *
-	 * @param options - The options for the class, passed as a dictionary with the parameter options {@link RelativeDeltaOptions}
+	 * @param options - The options for the class, passed as a dictionary (see {@link RelativeDeltaOptions})
 	 *
 	 * ## Examples
 	 *
@@ -256,7 +256,7 @@ export class RelativeDelta {
 		}
 
 		// Create a flag to skip the day validation when the day number has been modified by the function
-		// Setting enumerable to false so it doesn't show when console logging the RelativeDelta class or when comparing values in test
+		// 'enumerable' flag is false so it doesn't show when console logging the RelativeDelta class or when comparing values in tests
 		this.dayModifiedInternally = false;
 		Object.defineProperty(this, "dayModifiedInternally", {
 			value: false,
@@ -296,27 +296,19 @@ export class RelativeDelta {
 			// Count leap days between the two dates
 			const leapDayCount = this.countLeapDaysBetween(earlier, later);
 
-			// Calculate exact day difference for verification
-			// Use UTC dates to avoid DST issues
-			const earlierUtc = Date.UTC(earlierYear, earlierMonth, earlierDate);
-			const laterUtc = Date.UTC(laterYear, laterMonth, laterDate);
 			const msPerDay = 86400000; // 24 * 60 * 60 * 1000
 
 			// Simplified approach using Date arithmetic
-			const startOfEarlier = new Date(
-				Date.UTC(earlier.getFullYear(), earlier.getMonth(), earlier.getDate()),
-			);
-			const startOfLater = new Date(
-				Date.UTC(later.getFullYear(), later.getMonth(), later.getDate()),
-			);
+			const startOfEarlier = new Date(Date.UTC(earlierYear, earlierMonth, earlierDate));
+			const startOfLater = new Date(Date.UTC(laterYear, laterMonth, laterDate));
 
 			// Calculate years difference
-			years = later.getFullYear() - earlier.getFullYear();
+			years = laterYear - earlierYear;
 
 			// Calculate months more directly
-			let monthDiff = later.getMonth() - earlier.getMonth();
+			let monthDiff = laterMonth - earlierMonth;
 			// Adjust years and months based on day comparison
-			if (later.getDate() < earlier.getDate()) {
+			if (laterDate < earlierDate) {
 				monthDiff--;
 			}
 			if (monthDiff < 0) {
