@@ -1,5 +1,11 @@
 # relativedelta
 
+## 1.1.2
+
+### Patch Changes
+
+- 497f078: Minor documentation fixes
+
 ## 1.1.1
 
 ### Patch Changes
