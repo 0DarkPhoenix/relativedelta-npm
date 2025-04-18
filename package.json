@@ -1,6 +1,6 @@
 {
 	"name": "relativedelta",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"author": "Dark_Phoenix_",
 	"description": "Bring the utilities from the relativedelta function of the \"dateutils\" Python library to Javascript and Typescript",
 	"license": "MIT",
