@@ -4,14 +4,14 @@ export interface RelativeDeltaOptions {
 	/**
 	 * First date for calculating the difference between two dates.
 	 *
-	 * Must be provided together with date2.
+	 * Must be provided together with `date2`.
 	 */
 	date1?: Date;
 
 	/**
 	 * Second date for calculating the difference between two dates.
 	 *
-	 * Must be provided together with date1.
+	 * Must be provided together with `date1`.
 	 */
 	date2?: Date;
 
@@ -213,7 +213,7 @@ export class RelativeDelta {
 	 * `RelativeDelta` is a class which can determine the time difference between two dates,
 	 * apply a time delta to a date, and convert time units into other time units, all while respecting varying month lengths and leap years.
 	 *
-	 * @param options - The options for the class, passed as a dictionary (see {@link RelativeDeltaOptions})
+	 * @param options The options for the class, passed as a dictionary (see {@link RelativeDeltaOptions})
 	 *
 	 * ## Examples
 	 *
@@ -429,7 +429,7 @@ export class RelativeDelta {
 	/**
 	 * Apply the relative delta to the provided date
 	 *
-	 * @param date - `Date` object where the relative delta should be applied to.
+	 * @param date `Date` object where the relative delta should be applied to.
 	 *
 	 * @returns `Date` object with the applied relative delta
 	 *
@@ -564,7 +564,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total seconds, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of seconds
 	 */
 	toSeconds(referenceDate: Date = new Date()): number {
@@ -638,7 +638,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total milliseconds, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of milliseconds
 	 */
 	toMilliseconds(referenceDate: Date = new Date()): number {
@@ -648,7 +648,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total minutes, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of minutes
 	 */
 	toMinutes(referenceDate: Date = new Date()): number {
@@ -658,7 +658,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total hours, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of hours
 	 */
 	toHours(referenceDate: Date = new Date()): number {
@@ -668,7 +668,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total days, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of days
 	 */
 	toDays(referenceDate: Date = new Date()): number {
@@ -678,7 +678,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total weeks, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of weeks
 	 */
 	toWeeks(referenceDate: Date = new Date()): number {
@@ -688,7 +688,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total months, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of months
 	 */
 	toMonths(referenceDate: Date = new Date()): number {
@@ -712,7 +712,7 @@ export class RelativeDelta {
 	/**
 	 * Convert to total years, DST-neutral
 	 *
-	 * @param referenceDate - The date to use as reference for the calculation. Optional, defaults to current date.
+	 * @param referenceDate The date to use as reference for the calculation. Optional, defaults to current date.
 	 * @returns Total number of years
 	 */
 	toYears(referenceDate: Date = new Date()): number {
@@ -753,9 +753,9 @@ export class RelativeDelta {
 
 	/**
 	 * Utility method to handle unit overflow calculations
-	 * @param value - The current unit value to check for overflow
-	 * @param carryTo - The current value of the next larger unit
-	 * @param max - The maximum allowed value before overflow
+	 * @param value The current unit value to check for overflow
+	 * @param carryTo The current value of the next larger unit
+	 * @param max The maximum allowed value before overflow
 	 * @returns Tuple of [updated value, updated carryTo]
 	 */
 	private fixUnit(value: number, carryTo: number, max: number): [number, number] {
@@ -845,7 +845,7 @@ export class RelativeDelta {
 
 	/**
 	 * Check if a year is a leap year.
-	 * @param year - The year to check
+	 * @param year The year to check
 	 * @returns True if the year is a leap year, false otherwise
 	 */
 	private isLeapYear(year: number): boolean {
